@@ -22,6 +22,39 @@ router.post('/', verifyToken, async (req, res) => {
   res.json(blog);
 });
 
+// for like
+router.post("/:id/like", verifyToken, async (req, res) => {
+  const blog = await Blog.findById(req.params.id);
+  if (!blog.likes.includes(req.userId)) {
+    blog.likes.push(req.userId);
+    blog.unlikes.pull(req.userId); // Remove from unlike
+  }
+  await blog.save();
+  res.json({ message: "Liked" });
+});
+
+// for unlike
+router.post("/:id/unlike", verifyToken, async (req, res) => {
+  const blog = await Blog.findById(req.params.id);
+  if (!blog.unlikes.includes(req.userId)) {
+    blog.unlikes.push(req.userId);
+    blog.likes.pull(req.userId); // Remove from like
+  }
+  await blog.save();
+  res.json({ message: "Unliked" });
+});
+
+// for comment
+router.post("/:id/comment", verifyToken, async (req, res) => {
+  const blog = await Blog.findById(req.params.id);
+  blog.comments.push({
+    user: req.userId,
+    text: req.body.text,
+  });
+  await blog.save();
+  res.json({ message: "Comment added" });
+});
+
 // for image or video
 router.post("/", verifyToken, async (req, res) => {
   const { title, content, image, video } = req.body;
