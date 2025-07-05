@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 // Middleware to verify token
 const verifyToken = (req, res, next) => {
   const token = req.headers['authorization'];
+  
   if (!token) return res.status(403).send("Token missing");
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -19,7 +20,7 @@ const verifyToken = (req, res, next) => {
 
 router.get('/author/:userId', async (req, res) => {
   try {
-    const blogs = await Blog.find({ author: req.params.userId }).populate('author', 'username');
+    const blogs = await Blog.find({ author: req.params.userId }).populate('author', 'username profilePic');
     res.json(blogs);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch blogs by author" });
@@ -82,13 +83,13 @@ router.post("/", verifyToken, async (req, res) => {
 
 // READ ALL
 router.get('/', async (req, res) => {
-  const blogs = await Blog.find().populate('author', 'username');
+  const blogs = await Blog.find().populate('author', 'username profilePic');
   res.json(blogs);
 });
 
 // READ ONE
 router.get('/:id', async (req, res) => {
-  const blog = await Blog.findById(req.params.id).populate('author', 'username');
+  const blog = await Blog.findById(req.params.id).populate('author', 'username profilePic');
   res.json(blog);
 });
 
