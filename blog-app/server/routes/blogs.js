@@ -15,6 +15,17 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+// Get blogs by author ID
+
+router.get('/author/:userId', async (req, res) => {
+  try {
+    const blogs = await Blog.find({ author: req.params.userId }).populate('author', 'username');
+    res.json(blogs);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch blogs by author" });
+  }
+});
+
 // CREATE
 router.post('/', verifyToken, async (req, res) => {
   const blog = new Blog({ ...req.body, author: req.userId });
@@ -96,5 +107,8 @@ router.delete('/:id', verifyToken, async (req, res) => {
   await Blog.findByIdAndDelete(req.params.id);
   res.send("Deleted");
 });
+
+
+
 
 module.exports = router;
