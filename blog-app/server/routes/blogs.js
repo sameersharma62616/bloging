@@ -251,6 +251,33 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+router.delete("/:blogId/comment/:commentId", verifyToken, async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.blogId);
+    if (!blog) return res.status(404).json({ message: "Blog not found" });
+
+    const commentIndex = blog.comments.findIndex(
+      (c) => c._id.toString() === req.params.commentId
+    );
+
+    if (commentIndex === -1)
+      return res.status(404).json({ message: "Comment not found" });
+
+    const comment = blog.comments[commentIndex];
+
+    if (comment.user.toString() !== req.userId)
+      return res.status(403).json({ message: "Unauthorized" });
+
+    blog.comments.splice(commentIndex, 1);
+    await blog.save();
+
+    res.json({ message: "Comment deleted" });
+  } catch (err) {
+    console.error("❌ Delete Comment Error:", err);
+    res.status(500).json({ message: "Failed to delete comment" });
+  }
+});
+
 // ✅ Update a blog
 router.put('/:id', verifyToken, async (req, res) => {
   try {
