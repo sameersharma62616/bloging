@@ -2,6 +2,7 @@ const router = require('express').Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs'); // ⬅️ Add this at the top
+const Blog = require('../models/Blog');
 
 // Token middleware
 const verifyToken = (req, res, next) => {
@@ -70,6 +71,25 @@ router.put('/update', verifyToken, async (req, res) => {
   } catch (err) {
     console.error("Update error", err);
     res.status(500).json({ error: "Profile update failed" });
+  }
+});
+
+// ✅ DELETE user account and their blogs
+router.delete("/:id", verifyToken, async (req, res) => {
+  try {
+    if (req.userId !== req.params.id)
+      return res.status(403).json({ message: "Unauthorized" });
+
+    // 🗑️ Delete all blogs of this user
+    await Blog.deleteMany({ author: req.params.id });
+
+    // 🗑️ Delete the user
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Account and all blogs deleted successfully" });
+  } catch (err) {
+    console.error("❌ Account delete error:", err.message);
+    res.status(500).json({ message: "Failed to delete account" });
   }
 });
 
