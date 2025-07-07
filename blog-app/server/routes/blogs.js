@@ -174,15 +174,20 @@ router.post("/", verifyToken, async (req, res) => {
 router.post("/:id/like", verifyToken, async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
-    if (!blog) return res.status(404).send("Blog not found");
+   if (blog.likes.includes(req.userId)) {
+  // ✅ Already liked → remove like (toggle off)
+  blog.likes.pull(req.userId);
+  await blog.save();
+  return res.json({ message: "Like removed" });
+} else {
+  // ✅ Not liked yet → add like
+  blog.likes.push(req.userId);
+  blog.unlikes.pull(req.userId); // remove from unlikes if any
+  await blog.save();
+  return res.json({ message: "Liked" });
+}
 
-    if (!blog.likes.includes(req.userId)) {
-      blog.likes.push(req.userId);
-      blog.unlikes.pull(req.userId);
-    }
 
-    await blog.save();
-    res.json({ message: "Liked" });
   } catch (err) {
     res.status(500).json({ error: "Like failed" });
   }
@@ -190,17 +195,22 @@ router.post("/:id/like", verifyToken, async (req, res) => {
 
 // ✅ Unlike a blog
 router.post("/:id/unlike", verifyToken, async (req, res) => {
-  try {
+   try {
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).send("Blog not found");
 
-    if (!blog.unlikes.includes(req.userId)) {
+    if (blog.unlikes.includes(req.userId)) {
+      // ✅ Already unliked → toggle off (remove unlike)
+      blog.unlikes.pull(req.userId);
+      await blog.save();
+      return res.json({ message: "Unlike removed" });
+    } else {
+      // ✅ Add unlike
       blog.unlikes.push(req.userId);
-      blog.likes.pull(req.userId);
+      blog.likes.pull(req.userId); // remove like if present
+      await blog.save();
+      return res.json({ message: "Unliked" });
     }
-
-    await blog.save();
-    res.json({ message: "Unliked" });
   } catch (err) {
     res.status(500).json({ error: "Unlike failed" });
   }
